@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nmr-quant"
-version = "0.1.0"
+version = "0.2.0"
 description = "Least-squares fitting of NMR peak lineshapes to 1D spectra"
 readme = "README.md"
 requires-python = ">=3.11"

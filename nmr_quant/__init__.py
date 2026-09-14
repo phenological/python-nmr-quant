@@ -17,15 +17,18 @@ from __future__ import annotations
 
 from .fit import FitRecord, fit_dataset, fit_spectrum
 from .metrics import fit_metrics
+from .priors import apply_linear_prior, fit_linear_prior
 from .quality import apply_quality_map, build_quality_map, kde_score, load_quality_map
 from .results import QuantResults
 
 __all__ = [
     "FitRecord",
     "QuantResults",
+    "apply_linear_prior",
     "apply_quality_map",
     "build_quality_map",
     "fit_dataset",
+    "fit_linear_prior",
     "fit_metrics",
     "fit_spectrum",
     "kde_score",
