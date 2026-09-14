@@ -13,17 +13,27 @@ or plotting. Reference deconvolution and other row processing live in
 
 ## Status
 
-Early. Implemented so far:
+Feature-complete. Public API:
 
-- `nmr_quant.fit_metrics` — standard goodness-of-fit and residual diagnostics
+- `fit_spectrum(x, y, ...)` — fit one spectrum -> `FitRecord`. Single Voigt,
+  Voigt with satellites, or an annotation-driven multiplet, with an optional
+  simultaneous polynomial baseline and LS or Huber loss.
+- `fit_dataset(x, spectra, ...)` — fit a 2-D batch -> `QuantResults`.
+  Warm-starts on the mean spectrum, then fits each row with optional
+  per-spectrum FWHM/centre priors; `norm` yields a `quant` column and `ids`
+  are carried through.
+- `QuantResults` — the fit table + model metadata, with `save`/`load`
+  (parquet + json, no dataset needed) and `model_curve` for reconstruction.
+- `fit_metrics` — standard goodness-of-fit and residual diagnostics
   (`r2`, noise-adjusted `r2_adj`, `srr`, `sse`, `rmse`, `mae`, `residual_std`,
   `noise_std`, `aic`, `bic`, Durbin-Watson `dw`, `chi2_red`, `snr`).
+- `build_quality_map` / `apply_quality_map` / `load_quality_map` / `kde_score`
+  — the generic quality-map rules engine (thresholds are caller config).
 - `nmr_quant._shapes` — Voigt / multiplet lineshape primitives (bridge module;
-  these move to `python-nmr-spectra-processing` once its `lineshapes` module is
-  published).
+  these become a re-export from `python-nmr-spectra-processing.lineshapes`
+  once that module is published).
 
-Coming: `fit_spectrum`, `fit_dataset`, the `QuantResults` save/load container,
-and the quality-map rules engine.
+34 tests, ~94% coverage.
 
 ## Install (dev)
 
