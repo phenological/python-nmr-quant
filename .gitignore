@@ -1,0 +1,18 @@
+# Working plan — not for commit
+PLAN.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+# uv
+uv.lock

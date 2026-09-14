@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nmr-quant"
+version = "0.1.0"
+description = "Least-squares fitting of NMR peak lineshapes to 1D spectra"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Julien Wist", email = "julien.wist@murdoch.edu.au" }]
+keywords = ["nmr", "spectroscopy", "quantification", "voigt", "curve-fitting"]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    # Lineshapes will move to python-nmr-spectra-processing; until it is
+    # published, they live behind nmr_quant/_shapes.py (single import point).
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["nmr_quant"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "ruff>=0.1",
+    "tqdm>=4.67",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=nmr_quant --cov-report=term-missing"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B"]
