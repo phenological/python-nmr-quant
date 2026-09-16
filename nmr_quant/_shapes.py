@@ -90,6 +90,28 @@ def voigt_with_satellites(
     return y
 
 
+def voigt_multi_satellites(x, height, center, sigma, gamma, deltas, fracs,
+                           sigmas=None, gammas=None):
+    """Main Voigt plus N symmetric satellite pairs.
+
+    Each pair ``k`` adds two Voigt lines of height ``fracs[k] * height`` at
+    ``center +/- deltas[k]``. Satellite widths default to the main
+    ``sigma``/``gamma``; pass ``sigmas``/``gammas`` (one per pair) to give a pair
+    its own width (e.g. TMS ``13C`` satellites are slightly broader than the
+    main line). With one tied-width pair this equals
+    :func:`voigt_with_satellites`.
+    """
+    y = voigt_height(x, height, center, sigma, gamma)
+    for k, (d, f) in enumerate(zip(deltas, fracs, strict=True)):
+        if f and f > 0:
+            s = sigmas[k] if sigmas is not None else sigma
+            g = gammas[k] if gammas is not None else gamma
+            hs = f * height
+            y = y + voigt_height(x, hs, center - d, s, g)
+            y = y + voigt_height(x, hs, center + d, s, g)
+    return y
+
+
 def pseudo_voigt_fwhm(sigma: float, gamma: float) -> float:
     """Full width at half maximum of a Voigt via the pseudo-Voigt approximation.
 

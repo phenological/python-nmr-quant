@@ -66,6 +66,45 @@ class TestSatellites:
         rec = fit_spectrum(x, y, fit_satellites=True)
         assert not rec.has_satellites
 
+    def test_satellite_delta_locks_position(self):
+        # True satellites at 0.30; a fixed satellite_delta must be honoured
+        # exactly (position held, amplitude fitted), not re-detected.
+        x = _axis(2400)
+        h, c, s, g = 10.0, 0.0, 0.02, 0.012
+        y = _shapes.voigt_with_satellites(x, h, c, s, g,
+                                          f_sat=0.1, delta_sat=0.30,
+                                          sigma_sat=s, gamma_sat=g)
+        rec = fit_spectrum(x, y, fit_satellites=True, satellite_delta=0.30)
+        assert rec.has_satellites
+        assert rec.delta_sat == 0.30                  # locked, not detected
+        assert 0.05 < rec.f_sat < 0.2                 # amplitude still recovered
+
+    def test_satellite_delta_overrides_detection(self):
+        # Even a deliberately wrong fixed offset is used verbatim, proving the
+        # position is fixed rather than detected from the residual.
+        x = _axis(2400)
+        y = _shapes.voigt_with_satellites(x, 10.0, 0.0, 0.02, 0.012,
+                                          f_sat=0.1, delta_sat=0.30,
+                                          sigma_sat=0.02, gamma_sat=0.012)
+        rec = fit_spectrum(x, y, fit_satellites=True, satellite_delta=0.20)
+        assert rec.delta_sat == 0.20
+
+    def test_two_satellite_pairs(self):
+        # Two symmetric pairs (near + far) at fixed positions; both amplitudes
+        # recovered, positions held, and the larger pair is the primary one.
+        x = _axis(4000)
+        h, c, s, g = 10.0, 0.0, 0.006, 0.004      # narrow, well-separated sats
+        y = _shapes.voigt_multi_satellites(x, h, c, s, g,
+                                           deltas=(0.12, 0.32), fracs=(0.20, 0.05))
+        rec = fit_spectrum(x, y, fit_satellites=True, satellite_delta=[0.12, 0.32])
+        assert rec.has_satellites
+        assert list(rec.sat_deltas) == [0.12, 0.32]      # positions held
+        assert len(rec.sat_fracs) == 2
+        assert rec.sat_fracs[0] > rec.sat_fracs[1]        # near pair larger
+        assert abs(rec.sat_fracs[0] - 0.20) < 0.03
+        assert abs(rec.sat_fracs[1] - 0.05) < 0.03
+        assert rec.delta_sat == 0.12                       # primary = largest
+
 
 class TestMultiplet:
     def test_doublet_center_and_area(self):

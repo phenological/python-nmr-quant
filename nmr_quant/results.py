@@ -40,10 +40,11 @@ class QuantResults:
         param_cols = [c for c in _PARAM_COLS if c in self.df.columns]
         rest = [c for c in self.df.columns if c not in id_cols and c not in param_cols]
         df_save = self.df[id_cols + param_cols + rest].copy()
-        if "baseline_coeffs" in df_save.columns:
-            df_save["baseline_coeffs"] = df_save["baseline_coeffs"].apply(
-                lambda v: json.dumps(list(v)) if isinstance(v, (list, np.ndarray)) else "[]"
-            )
+        for _lc in ("baseline_coeffs", "sat_deltas", "sat_fracs", "sat_sigmas", "sat_gammas"):
+            if _lc in df_save.columns:
+                df_save[_lc] = df_save[_lc].apply(
+                    lambda v: json.dumps(list(v)) if isinstance(v, (list, np.ndarray)) else "[]"
+                )
         df_save.to_parquet(str(base) + ".parquet", index=False)
 
         with open(str(base) + ".json", "w") as f:
@@ -54,11 +55,12 @@ class QuantResults:
         """Read results saved by :meth:`save`. No dataset required."""
         base = Path(path)
         df = pd.read_parquet(str(base) + ".parquet")
-        if "baseline_coeffs" in df.columns:
-            df["baseline_coeffs"] = df["baseline_coeffs"].apply(
-                lambda v: json.loads(v) if isinstance(v, str)
-                else (list(v) if v is not None else [])
-            )
+        for _lc in ("baseline_coeffs", "sat_deltas", "sat_fracs", "sat_sigmas", "sat_gammas"):
+            if _lc in df.columns:
+                df[_lc] = df[_lc].apply(
+                    lambda v: json.loads(v) if isinstance(v, str)
+                    else (list(v) if v is not None else [])
+                )
         meta = {}
         json_path = Path(str(base) + ".json")
         if json_path.exists():
@@ -84,13 +86,23 @@ class QuantResults:
                                   meta.get("offsets", [0.0]),
                                   meta.get("heights_rel", [1.0]))
         else:
-            y = _shapes.voigt_with_satellites(
-                x, h, c, sg, gm,
-                float(row.get("f_sat", 0.0) or 0.0),
-                float(row.get("delta_sat", 0.0) or 0.0),
-                float(row.get("sigma_sat", sg) or sg),
-                float(row.get("gamma_sat", gm) or gm),
-            )
+            deltas = row.get("sat_deltas")
+            fracs = row.get("sat_fracs")
+            if deltas is not None and len(deltas):
+                # N fixed satellite pairs, each with its own fitted width
+                ssig = row.get("sat_sigmas"); sgam = row.get("sat_gammas")
+                y = _shapes.voigt_multi_satellites(
+                    x, h, c, sg, gm, list(deltas), list(fracs),
+                    sigmas=list(ssig) if ssig is not None and len(ssig) else None,
+                    gammas=list(sgam) if sgam is not None and len(sgam) else None)
+            else:
+                y = _shapes.voigt_with_satellites(
+                    x, h, c, sg, gm,
+                    float(row.get("f_sat", 0.0) or 0.0),
+                    float(row.get("delta_sat", 0.0) or 0.0),
+                    float(row.get("sigma_sat", sg) or sg),
+                    float(row.get("gamma_sat", gm) or gm),
+                )
 
         coeffs = row.get("baseline_coeffs")
         if coeffs is not None and len(coeffs):
